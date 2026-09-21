@@ -23,23 +23,39 @@ function vibeFor(score) {
   return VIBES.find((v) => score >= v.min && score <= v.max) || VIBES[0];
 }
 
-// real bars around the Jacksonville Beach / Neptune Beach / Atlantic Beach area
-const SEED_BARS = [
-  { id: 1, name: "The Ritz", genre: "Nightclub / Dance", neighborhood: "Jacksonville Beach", lat: 30.292279, lng: -81.391212, score: 82, checkins: 14, updatedMin: 3, peakHour: 25, peakScore: 90, floor: 12 },
-  { id: 2, name: "Monkey's Uncle Tavern", genre: "Sports Bar / Live Music", neighborhood: "Jacksonville Beach", lat: 30.304593, lng: -81.395957, score: 64, checkins: 22, updatedMin: 5, peakHour: 21, peakScore: 78, floor: 20 },
-  { id: 3, name: "Lynch's Irish Pub", genre: "Irish Pub / Live Music", neighborhood: "Jacksonville Beach", lat: 30.293469, lng: -81.390605, score: 58, checkins: 17, updatedMin: 8, peakHour: 22, peakScore: 82, floor: 18 },
-  { id: 4, name: "Lemon Bar", genre: "Beachfront Lounge", neighborhood: "Neptune Beach", lat: 30.323921, lng: -81.395031, score: 41, checkins: 9, updatedMin: 20, peakHour: 20, peakScore: 65, floor: 14 },
-  { id: 5, name: "Pete's Bar", genre: "Dive Bar", neighborhood: "Neptune Beach", lat: 30.323962, lng: -81.395877, score: 71, checkins: 19, updatedMin: 6, peakHour: 24, peakScore: 85, floor: 15 },
-  { id: 6, name: "Culhane's Irish Pub", genre: "Irish Pub / Sports", neighborhood: "Atlantic Beach", lat: 30.325704, lng: -81.410610, score: 47, checkins: 10, updatedMin: 14, peakHour: 21, peakScore: 68, floor: 16 },
-  { id: 7, name: "Harbor Tavern", genre: "Dive Bar", neighborhood: "Atlantic Beach", lat: 30.325866, lng: -81.419430, score: 22, checkins: 4, updatedMin: 35, peakHour: 22, peakScore: 55, floor: 10 },
-  { id: 8, name: "Mayport Garden Club", genre: "Speakeasy / Tiki Lounge", neighborhood: "Atlantic Beach", lat: 30.333987, lng: -81.415086, score: 36, checkins: 7, updatedMin: 25, peakHour: 21, peakScore: 60, floor: 12 },
-];
-
-const NEIGHBORHOODS = ["All areas", ...Array.from(new Set(SEED_BARS.map((b) => b.neighborhood)))];
-
-// central Jax Beach fallback point (near the pier), used only if device location is unavailable
-const FALLBACK_LAT = 30.2947;
-const FALLBACK_LNG = -81.3958;
+// Real bars, grouped by city. Coordinates are approximate (derived from known street
+// addresses, not precise geocoding) which is fine for a prototype's distance sorting.
+const CITIES = {
+  jaxbeach: {
+    label: "Jax Beach area",
+    fallbackLat: 30.2947,
+    fallbackLng: -81.3958,
+    bars: [
+      { id: "jb1", name: "The Ritz", genre: "Nightclub / Dance", neighborhood: "Jacksonville Beach", lat: 30.292279, lng: -81.391212, score: 82, checkins: 14, updatedMin: 3, peakHour: 25, peakScore: 90, floor: 12 },
+      { id: "jb2", name: "Monkey's Uncle Tavern", genre: "Sports Bar / Live Music", neighborhood: "Jacksonville Beach", lat: 30.304593, lng: -81.395957, score: 64, checkins: 22, updatedMin: 5, peakHour: 21, peakScore: 78, floor: 20 },
+      { id: "jb3", name: "Lynch's Irish Pub", genre: "Irish Pub / Live Music", neighborhood: "Jacksonville Beach", lat: 30.293469, lng: -81.390605, score: 58, checkins: 17, updatedMin: 8, peakHour: 22, peakScore: 82, floor: 18 },
+      { id: "jb4", name: "Lemon Bar", genre: "Beachfront Lounge", neighborhood: "Neptune Beach", lat: 30.323921, lng: -81.395031, score: 41, checkins: 9, updatedMin: 20, peakHour: 20, peakScore: 65, floor: 14 },
+      { id: "jb5", name: "Pete's Bar", genre: "Dive Bar", neighborhood: "Neptune Beach", lat: 30.323962, lng: -81.395877, score: 71, checkins: 19, updatedMin: 6, peakHour: 24, peakScore: 85, floor: 15 },
+      { id: "jb6", name: "Culhane's Irish Pub", genre: "Irish Pub / Sports", neighborhood: "Atlantic Beach", lat: 30.325704, lng: -81.410610, score: 47, checkins: 10, updatedMin: 14, peakHour: 21, peakScore: 68, floor: 16 },
+      { id: "jb7", name: "Harbor Tavern", genre: "Dive Bar", neighborhood: "Atlantic Beach", lat: 30.325866, lng: -81.419430, score: 22, checkins: 4, updatedMin: 35, peakHour: 22, peakScore: 55, floor: 10 },
+      { id: "jb8", name: "Mayport Garden Club", genre: "Speakeasy / Tiki Lounge", neighborhood: "Atlantic Beach", lat: 30.333987, lng: -81.415086, score: 36, checkins: 7, updatedMin: 25, peakHour: 21, peakScore: 60, floor: 12 },
+    ],
+  },
+  daytona: {
+    label: "Daytona Beach area",
+    fallbackLat: 29.2108,
+    fallbackLng: -81.0031,
+    bars: [
+      { id: "db1", name: "Boot Hill Saloon", genre: "Biker Dive Bar", neighborhood: "Main Street", lat: 29.2108, lng: -81.0107, score: 68, checkins: 16, updatedMin: 6, peakHour: 23, peakScore: 85, floor: 15 },
+      { id: "db2", name: "Froggy's Saloon", genre: "Biker Bar / Live Music", neighborhood: "Main Street", lat: 29.2110, lng: -81.0034, score: 74, checkins: 20, updatedMin: 4, peakHour: 24, peakScore: 88, floor: 12 },
+      { id: "db3", name: "Main Street Station", genre: "Garage Bar / Live Music", neighborhood: "Main Street", lat: 29.2108, lng: -81.0106, score: 52, checkins: 11, updatedMin: 12, peakHour: 22, peakScore: 75, floor: 10 },
+      { id: "db4", name: "Bank & Blues Club", genre: "Blues & Live Music", neighborhood: "Main Street", lat: 29.2109, lng: -81.0047, score: 45, checkins: 9, updatedMin: 18, peakHour: 21, peakScore: 70, floor: 8 },
+      { id: "db5", name: "Dirty Harry's Pub", genre: "Dive Bar", neighborhood: "Main Street", lat: 29.2109, lng: -81.0046, score: 38, checkins: 7, updatedMin: 22, peakHour: 22, peakScore: 65, floor: 15 },
+      { id: "db6", name: "Full Moon Saloon", genre: "Saloon / Live Music", neighborhood: "Main Street", lat: 29.2109, lng: -81.0048, score: 55, checkins: 12, updatedMin: 10, peakHour: 23, peakScore: 72, floor: 10 },
+      { id: "db7", name: "Oyster Pub", genre: "Sports Bar", neighborhood: "Seabreeze", lat: 29.2168, lng: -81.0037, score: 61, checkins: 18, updatedMin: 7, peakHour: 19, peakScore: 68, floor: 20 },
+    ],
+  },
+};
 
 // haversine distance in miles
 function distanceMiles(lat1, lng1, lat2, lng2) {
@@ -224,7 +240,9 @@ function BarCard({ bar, distance, expanded, onToggle, onCheckIn, when, gate }) {
 }
 
 export default function App() {
-  const [bars, setBars] = useState(SEED_BARS);
+  const [cityKey, setCityKey] = useState("jaxbeach");
+  const city = CITIES[cityKey];
+  const [bars, setBars] = useState(city.bars);
   const [expandedId, setExpandedId] = useState(null);
   const [query, setQuery] = useState("");
   const [area, setArea] = useState("All areas");
@@ -236,6 +254,20 @@ export default function App() {
   const [deviceId] = useState(() => "anon-" + Math.random().toString(36).slice(2, 10));
   const [lastCheckIn, setLastCheckIn] = useState({}); // barId -> timestamp ms, scoped to this device
   const [demoBarId, setDemoBarId] = useState(null); // when set, pretend we're standing right at this bar
+
+  const neighborhoods = useMemo(
+    () => ["All areas", ...Array.from(new Set(city.bars.map((b) => b.neighborhood)))],
+    [city]
+  );
+
+  function handleCityChange(nextKey) {
+    setCityKey(nextKey);
+    setBars(CITIES[nextKey].bars);
+    setArea("All areas");
+    setExpandedId(null);
+    setDemoBarId(null);
+    setQuery("");
+  }
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -255,10 +287,12 @@ export default function App() {
   const withDistance = useMemo(() => {
     return bars.map((b) => {
       if (demoBarId === b.id) return { ...b, distance: 0.02 };
-      const d = userLoc ? distanceMiles(userLoc.lat, userLoc.lng, b.lat, b.lng) : distanceMiles(FALLBACK_LAT, FALLBACK_LNG, b.lat, b.lng);
+      const d = userLoc
+        ? distanceMiles(userLoc.lat, userLoc.lng, b.lat, b.lng)
+        : distanceMiles(city.fallbackLat, city.fallbackLng, b.lat, b.lng);
       return { ...b, distance: d };
     });
-  }, [bars, userLoc, demoBarId]);
+  }, [bars, userLoc, demoBarId, city]);
 
   const filtered = useMemo(() => {
     let list = withDistance.filter(
@@ -329,7 +363,27 @@ export default function App() {
               LIVE
             </span>
           </div>
-          <p style={{ color: "#6B6B63", fontSize: 13 }}>See how poppin it is before you go. Jax Beach area.</p>
+          <p style={{ color: "#6B6B63", fontSize: 13 }}>See how poppin it is before you go.</p>
+
+          <div className="flex gap-2 mt-3">
+            {Object.entries(CITIES).map(([key, c]) => (
+              <button
+                key={key}
+                onClick={() => handleCityChange(key)}
+                className="flex-1 py-1.5 text-center transition-colors"
+                style={{
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  background: cityKey === key ? "#0D0D0D" : "#FFFFFF",
+                  color: cityKey === key ? "#CCFF00" : "#6B6B63",
+                  border: "1px solid " + (cityKey === key ? "#0D0D0D" : "#E4E2DB"),
+                }}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
 
           <div className="flex items-center gap-1.5 mt-3" style={{ color: locStatus === "granted" ? "#0D0D0D" : "#9B998F", fontSize: 11 }}>
             <Navigation size={11} />
@@ -342,7 +396,7 @@ export default function App() {
             <span style={{ color: "#9B998F", fontSize: 11 }}>Demo mode, pretend I'm at:</span>
             <select
               value={demoBarId || ""}
-              onChange={(e) => setDemoBarId(e.target.value ? Number(e.target.value) : null)}
+              onChange={(e) => setDemoBarId(e.target.value || null)}
               className="flex-1 outline-none px-1.5 py-1"
               style={{ background: "#F7F6F1", border: "1px solid #E4E2DB", borderRadius: 6, color: "#0D0D0D", fontSize: 11.5 }}
             >
@@ -382,7 +436,7 @@ export default function App() {
             className="flex-1 px-3 outline-none"
             style={{ background: "#FFFFFF", border: "1px solid #E4E2DB", borderRadius: 10, color: "#0D0D0D", fontSize: 12.5, height: 38 }}
           >
-            {NEIGHBORHOODS.map((n) => (
+            {neighborhoods.map((n) => (
               <option key={n} value={n}>{n}</option>
             ))}
           </select>
